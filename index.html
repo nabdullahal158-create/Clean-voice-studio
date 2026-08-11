@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CleanVoice Studio — নয়েজ রিমুভার + ভিডিও এডিটর</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b1120; --card:rgba(30,41,59,.55); --border:rgba(148,163,184,.18);
+    --txt:#e2e8f0; --muted:#94a3b8; --ac1:#6366f1; --ac2:#22d3ee;
+    --ok:#34d399; --err:#f87171;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:'Hind Siliguri','SolaimanLipi',system-ui,sans-serif;
+    background:radial-gradient(1200px 600px at 80% -10%,rgba(99,102,241,.25),transparent),
+               radial-gradient(900px 500px at 0% 100%,rgba(34,211,238,.15),transparent),var(--bg);
+    color:var(--txt); min-height:100vh; padding:24px 16px 60px;
+  }
+  .wrap{max-width:920px;margin:0 auto}
+  header{text-align:center;margin-bottom:26px}
+  .logo{font-size:42px}
+  h1{font-size:clamp(26px,5vw,38px);font-weight:700;
+     background:linear-gradient(90deg,var(--ac1),var(--ac2));
+     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .sub{color:var(--muted);margin-top:6px;font-size:15px}
+  .badges{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+  .badge{font-size:12.5px;color:var(--muted);border:1px solid var(--border);
+         padding:4px 12px;border-radius:999px;background:rgba(15,23,42,.5)}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;
+        padding:22px;margin-bottom:18px;backdrop-filter:blur(10px);
+        box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .drop{border:2px dashed rgba(148,163,184,.35);border-radius:14px;padding:38px 20px;
+        text-align:center;cursor:pointer;transition:.25s}
+  .drop:hover,.drop.over{border-color:var(--ac2);background:rgba(34,211,238,.06);transform:scale(1.005)}
+  .drop .ic{font-size:44px;margin-bottom:10px}
+  .drop b{font-size:17px}
+  .drop small{display:block;color:var(--muted);margin-top:6px}
+  .demoBtn{margin-top:14px;background:none;border:1px solid var(--border);color:var(--ac2);
+           padding:8px 16px;border-radius:999px;cursor:pointer;font-family:inherit;font-size:14px;transition:.2s}
+  .demoBtn:hover{background:rgba(34,211,238,.1)}
+  /* file info + inline preview */
+  .fileInfo{display:none;gap:16px;margin-top:16px;background:rgba(15,23,42,.55);
+            border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .fileInfo.on{display:flex;flex-wrap:wrap}
+  .fileInfo .meta{flex:1;min-width:180px}
+  .fileInfo .nm{font-weight:600;word-break:break-all;font-size:14.5px}
+  .fileInfo .sz{color:var(--muted);font-size:12.5px;margin-top:2px}
+  .fileInfo .x{align-self:flex-start;border:none;background:rgba(248,113,113,.15);color:var(--err);
+               width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px}
+  #prevBox{width:150px;max-height:100px;border-radius:10px;background:#000;object-fit:contain;
+           border:1px solid var(--border);transition:transform .3s, filter .3s}
+  /* options */
+  .opts{display:none;margin-top:6px}
+  .opts.on{display:block}
+  .secTitle{font-size:15px;font-weight:700;margin:18px 0 10px;display:flex;align-items:center;gap:8px}
+  .secTitle small{font-weight:400;color:var(--muted)}
+  .optRow label{font-size:14.5px;font-weight:600;display:flex;justify-content:space-between}
+  .optRow .val{color:var(--ac2)}
+  input[type=range]{width:100%;margin-top:8px;accent-color:var(--ac1);height:22px;cursor:pointer}
+  .scaleLbl{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:2px}
+  .chk{display:flex;align-items:center;gap:10px;margin-top:12px;cursor:pointer;font-size:14.5px;user-select:none}
+  .chk input{width:18px;height:18px;accent-color:var(--ac1);cursor:pointer}
+  .chk small{color:var(--muted)}
+  /* edit studio */
+  .studio{border:1px solid var(--border);border-radius:14px;padding:16px;margin-top:18px;
+          background:rgba(15,23,42,.4)}
+  .segBtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .segBtns button{border:1px solid var(--border);background:rgba(30,41,59,.6);color:var(--txt);
+                  padding:8px 14px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:13.5px;transition:.15s}
+  .segBtns button:hover{border-color:var(--ac2)}
+  .segBtns button.on{background:linear-gradient(90deg,rgba(99,102,241,.35),rgba(34,211,238,.3));
+                     border-color:var(--ac2);color:#fff;font-weight:600}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:560px){.grid2{grid-template-columns:1fr}}
+  .mini{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.7}
+  select,numInput{font-family:inherit}
+  select,input[type=number]{background:rgba(15,23,42,.8);color:var(--txt);border:1px solid var(--border);
+        border-radius:10px;padding:9px 12px;font-size:14px;width:100%}
+  .trimRow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:560px){.trimRow{grid-template-columns:1fr}}
+  .trimRow .fld label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
+  .note{margin-top:14px;font-size:12.5px;color:var(--muted);background:rgba(99,102,241,.08);
+        border:1px dashed rgba(99,102,241,.35);border-radius:10px;padding:9px 12px}
+  .resetSliders{background:none;border:none;color:var(--ac2);cursor:pointer;font-family:inherit;
+                font-size:12.5px;text-decoration:underline}
+  /* go button */
+  .go{display:none;width:100%;margin-top:20px;padding:14px;border:none;border-radius:12px;
+      font-size:17px;font-weight:700;font-family:inherit;color:#fff;cursor:pointer;
+      background:linear-gradient(90deg,var(--ac1),var(--ac2));transition:.2s}
+  .go:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 24px rgba(99,102,241,.4)}
+  .go:disabled{opacity:.5;cursor:not-allowed}
+  .go.on{display:block}
+  /* progress */
+  #progCard{display:none}
+  #progCard.on{display:block}
+  .statusLine{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:14.5px}
+  #elapsed{color:var(--muted);font-size:13px}
+  .barBg{height:14px;background:rgba(15,23,42,.8);border-radius:999px;overflow:hidden;border:1px solid var(--border)}
+  .bar{height:100%;width:0%;border-radius:999px;transition:width .5s ease;
+       background:linear-gradient(90deg,var(--ac1),var(--ac2));position:relative}
+  .bar::after{content:'';position:absolute;inset:0;
+       background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
+       animation:shine 1.2s infinite}
+  @keyframes shine{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+  .tip{margin-top:12px;font-size:13px;color:var(--muted);text-align:center}
+  /* result */
+  #resCard{display:none}
+  #resCard.on{display:block}
+  .doneLine{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;color:var(--ok);margin-bottom:16px}
+  .players{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:640px){.players{grid-template-columns:1fr}}
+  .pl h3{font-size:14px;margin-bottom:8px;color:var(--muted)}
+  .pl.clean h3{color:var(--ok)}
+  .pl video{width:100%;border-radius:12px;background:#000;border:1px solid var(--border)}
+  .actions{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
+  .dlBtn{flex:1;min-width:200px;text-align:center;text-decoration:none;padding:13px;border-radius:12px;
+         font-weight:700;color:#062a26;background:linear-gradient(90deg,#34d399,#22d3ee);transition:.2s}
+  .dlBtn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(52,211,153,.35)}
+  .again{padding:13px 22px;border-radius:12px;border:1px solid var(--border);background:none;
+         color:var(--txt);font-family:inherit;font-size:15px;cursor:pointer}
+  .again:hover{background:rgba(148,163,184,.1)}
+  #toast{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-90px);z-index:50;
+         background:rgba(127,29,29,.95);border:1px solid var(--err);color:#fecaca;padding:12px 22px;
+         border-radius:12px;font-size:14.5px;transition:transform .35s;max-width:90vw}
+  #toast.show{transform:translateX(-50%) translateY(0)}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:26px;line-height:1.9}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="wrap">
+
+  <header>
+    <div class="logo">🎙️🎬</div>
+    <h1>CleanVoice Studio</h1>
+    <p class="sub">ভিডিও আপলোড দিন — নয়েজ রিমুভ + ফ্লিপ, রোটেট, এনহ্যান্স, ট্রিম... সব একসাথে!</p>
+    <div class="badges">
+      <span class="badge">🤖 AI নয়েজ রিমুভাল</span>
+      <span class="badge">🎬 ভিডিও এডিটর</span>
+      <span class="badge">🔒 সার্ভারেই প্রসেস হয়</span>
+    </div>
+  </header>
+
+  <!-- Upload -->
+  <div class="card">
+    <div class="drop" id="drop">
+      <div class="ic">📤</div>
+      <b>ভিডিও এখানে ড্র্যাগ করুন</b>
+      <small>অথবা ক্লিক করে সিলেক্ট করুন — MP4 · MOV · MKV · WEBM (সর্বোচ্চ ২GB)</small>
+      <input type="file" id="fileInput" accept="video/*,audio/*,.mkv,.3gp" hidden>
+      <div><button class="demoBtn" id="demoBtn" type="button">🧪 ডেমো ভিডিও দিয়ে ট্রাই করুন</button></div>
+    </div>
+
+    <div class="fileInfo" id="fileInfo">
+      <video id="prevBox" muted loop playsinline></video>
+      <div class="meta">
+        <div class="nm" id="fName"></div>
+        <div class="sz" id="fSize"></div>
+        <div class="sz" id="fDur"></div>
+      </div>
+      <button class="x" id="fRemove" title="সরান">✕</button>
+    </div>
+
+    <div class="opts" id="opts">
+
+      <!-- 🔊 Noise section -->
+      <div class="secTitle">🔊 অডিও নয়েজ রিমুভাল <small>(সবসময় চালু থাকে)</small></div>
+      <div class="optRow">
+        <label>নয়েজ রিমুভাল শক্তি <span class="val" id="strVal">৯৫%</span></label>
+        <input type="range" id="strength" min="10" max="100" value="95">
+        <div class="scaleLbl"><span>হালকা</span><span>মাঝারি</span><span>১০০% = সবচেয়ে ক্লিন</span></div>
+      </div>
+      <label class="chk">
+        <input type="checkbox" id="bassCut" checked>
+        <span>গভীর গমগমে শব্দ কাটুন <small>(ফ্যান/এসি/জেনারেটরের রাম্বল)</small></span>
+      </label>
+      <label class="chk">
+        <input type="checkbox" id="polish" checked>
+        <span>🎚️ ভয়েস স্মুদিং (স্টুডিও পলিশ) <small>(কণ্ঠের লেভেল সমান + প্রফেশনাল লাউডনেস — রেডিওর মতো সাউন্ড)</small></span>
+      </label>
+
+      <!-- 🎬 Edit studio -->
+      <div class="studio">
+        <div class="secTitle" style="margin-top:0">🎬 ভিডিও এডিট স্টুডিও <small>(অপশনাল — প্রিভিউতে লাইভ দেখুন)</small></div>
+
+        <div class="grid2">
+          <div>
+            <div class="optRow">
+              <label>🔄 ফ্লিপ / মিরর</label>
+              <div class="segBtns" id="flipSeg">
+                <button data-v="none" class="on">কিছু না</button>
+                <button data-v="h">↔️ মিরর</button>
+                <button data-v="v">↕️ উল্টো</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="optRow">
+              <label>🔁 রোটেট</label>
+              <div class="segBtns" id="rotSeg">
+                <button data-v="0" class="on">0°</button>
+                <button data-v="90">90°</button>
+                <button data-v="180">180°</button>
+                <button data-v="270">270°</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:6px">
+          <label class="chk"><input type="checkbox" id="aiPolish" checked>
+            <span>🤖 AI ভিডিও পলিশ <small>(অটো স্মুথ + কালার ব্যালান্স + শার্প)</small></span></label>
+          <label class="chk"><input type="checkbox" id="hdUpscale">
+            <span>📺 HD আপস্কেল <small>(ছোট ভিডিও → 1080p)</small></span></label>
+        </div>
+        <div class="grid2" style="margin-top:4px">
+          <label class="chk"><input type="checkbox" id="motion">
+            <span>🎞️ স্মুথ মোশন 60fps <small>(সময় কিছুটা বেশি লাগবে)</small></span></label>
+          <label class="chk"><input type="checkbox" id="sharpen">
+            <span>🔍 এক্সট্রা শার্পন</span></label>
+        </div>
+        <div style="font-size:12px;opacity:.65;margin-top:8px;line-height:1.5">💡 AI পলিশ অন থাকলে ভিডিওটা নিজে বিশ্লেষণ করে ঠিকমতো উজ্জ্বলতা/রং সেট করে দেয়। বন্ধ রাখলে ভিডিও রি-এনকোড হয় না, ফলে সবচেয়ে ফাস্ট! ⚡</div>
+
+        <div class="optRow" style="margin-top:14px">
+          <label>☀️ উজ্জ্বলতা <span class="val" id="bVal">১০০%</span></label>
+          <input type="range" id="brightness" min="50" max="150" value="100">
+        </div>
+        <div class="optRow" style="margin-top:10px">
+          <label>🌗 কনট্রাস্ট <span class="val" id="cVal">১০০%</span></label>
+          <input type="range" id="contrast" min="50" max="180" value="100">
+        </div>
+        <div class="optRow" style="margin-top:10px">
+          <label>🎨 রঙের তীব্রতা <span class="val" id="sVal">১০০%</span></label>
+          <input type="range" id="saturation" min="0" max="200" value="100">
+        </div>
+        <div style="text-align:right;margin-top:4px">
+          <button class="resetSliders" id="resetSl">↺ কালার সেটিং রিসেট</button>
+        </div>
+
+        <div class="grid2" style="margin-top:8px">
+          <div>
+            <div class="optRow"><label>⏩ স্পিড</label></div>
+            <select id="speed">
+              <option value="0.5">🐢 ০.৫x (স্লো মোশন)</option>
+              <option value="0.75">০.৭৫x</option>
+              <option value="1" selected>১x (নরমাল)</option>
+              <option value="1.25">১.২৫x</option>
+              <option value="1.5">১.৫x</option>
+              <option value="2">🚀 ২x (ফাস্ট)</option>
+            </select>
+          </div>
+          <div>
+            <div class="optRow"><label>✂️ ট্রিম (সেকেন্ড)</label></div>
+            <div class="trimRow">
+              <div class="fld"><input type="number" id="trimStart" min="0" step="0.5" placeholder="শুরু: 0"></div>
+              <div class="fld"><input type="number" id="trimEnd" min="0" step="0.5" placeholder="শেষ: শেষ পর্যন্ত"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="note">ℹ️ এডিট থাকলে ভিডিও রি-এনকোড হয়, তাই একটু বেশি সময় লাগতে পারে। প্রিভিউতে ফ্লিপ/রোটেট/কালার লাইভ দেখা যাবে।</div>
+      </div>
+    </div>
+
+    <button class="go" id="goBtn">✨ প্রসেস করুন</button>
+  </div>
+
+  <!-- Progress -->
+  <div class="card" id="progCard">
+    <div class="statusLine">
+      <span id="statusMsg">অপেক্ষা করুন...</span>
+      <span id="elapsed">⏱ 0s</span>
+    </div>
+    <div class="barBg"><div class="bar" id="bar"></div></div>
+    <p class="tip">বড় ভিডিওতে কয়েক মিনিট লাগতে পারে — পেজ বন্ধ করবেন না 🙂</p>
+  </div>
+
+  <!-- Result -->
+  <div class="card" id="resCard">
+    <div class="doneLine">✅ সম্পন্ন! তুলনা করে দেখুন 👇</div>
+    <div class="players">
+      <div class="pl">
+        <h3>🔴 আসল</h3>
+        <video id="origPlayer" controls playsinline></video>
+      </div>
+      <div class="pl clean">
+        <h3>🟢 প্রসেসড ✨</h3>
+        <video id="cleanPlayer" controls playsinline></video>
+      </div>
+    </div>
+    <div class="actions">
+      <a class="dlBtn" id="dlBtn" href="#" download>⬇️ ভিডিও ডাউনলোড করুন</a>
+      <button class="again" id="againBtn">🔄 নতুন ভিডিও</button>
+    </div>
+  </div>
+
+  <footer>
+    🔊 AI নয়েজ রিমুভাল · 🔄 ফ্লিপ/রোটেট · ✨ এনহ্যান্স · ⏩ স্পিড · ✂️ ট্রিম<br>
+    আপনার ফাইল শুধু এই সার্ভারেই প্রসেস হয়, ২ ঘণ্টা পর অটোমেটিক ডিলিট হয়ে যায় 🔒
+  </footer>
+</div>
+
+<script>
+const drop=document.getElementById('drop'), fileInput=document.getElementById('fileInput'),
+      fileInfo=document.getElementById('fileInfo'), fName=document.getElementById('fName'),
+      fSize=document.getElementById('fSize'), fDur=document.getElementById('fDur'),
+      prevBox=document.getElementById('prevBox'),
+      opts=document.getElementById('opts'), goBtn=document.getElementById('goBtn'),
+      progCard=document.getElementById('progCard'), resCard=document.getElementById('resCard'),
+      bar=document.getElementById('bar'), statusMsg=document.getElementById('statusMsg'),
+      elapsed=document.getElementById('elapsed'),
+      origPlayer=document.getElementById('origPlayer'), cleanPlayer=document.getElementById('cleanPlayer'),
+      dlBtn=document.getElementById('dlBtn'), toast=document.getElementById('toast'),
+      strength=document.getElementById('strength'), strVal=document.getElementById('strVal');
+
+let file=null, jobId=null, pollT=null, tickT=null, t0=0, origURL=null, vidDur=0;
+const bnNum=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
+const $=id=>document.getElementById(id);
+
+function showToast(msg){ toast.textContent=msg; toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'),4000); }
+function fmtMB(b){ return b>1073741824 ? (b/1073741824).toFixed(2)+' GB' : (b/1048576).toFixed(1)+' MB'; }
+function fmtDur(s){ s=Math.round(s); return bnNum(Math.floor(s/60))+':'+bnNum(String(s%60).padStart(2,'0'))+' মিনিট'; }
+
+/* ---------- segmented buttons ---------- */
+function segInit(id){
+  const seg=$(id);
+  seg.addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    seg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); updPreview();
+  });
+  return ()=>seg.querySelector('.on').dataset.v;
+}
+const getFlip=segInit('flipSeg'), getRot=segInit('rotSeg');
+
+/* ---------- live preview of edits ---------- */
+const B=$('brightness'), C=$('contrast'), S=$('saturation');
+function pct(v){ return bnNum(v)+'%'; }
+function updLabels(){ $('bVal').textContent=pct(B.value); $('cVal').textContent=pct(C.value);
+  $('sVal').textContent=pct(S.value); strVal.textContent=pct(strength.value); }
+function updPreview(){
+  updLabels();
+  const f=getFlip(), r=getRot();
+  let tr='';
+  if(f==='h') tr+=' scaleX(-1)';
+  if(f==='v') tr+=' scaleY(-1)';
+  if(r!=='0') tr+=` rotate(${r}deg) scale(0.55)`;
+  prevBox.style.transform=tr||'';
+  let fl=`brightness(${B.value/100}) contrast(${C.value/100}) saturate(${S.value/100})`;
+  if($('aiPolish').checked) fl+=' contrast(1.05) saturate(1.08) brightness(1.02)';
+  prevBox.style.filter=fl;
+  prevBox.playbackRate=parseFloat($('speed').value)||1;
+  // result-এর আসল ভিডিওতেও যেন এডিট-প্রিভিউ না লেগে থাকে
+  if(!resCard.classList.contains('on')){ origPlayer.style.transform=''; origPlayer.style.filter=''; }
+}
+[strength,B,C,S].forEach(el=>el.addEventListener('input',updPreview));
+['aiPolish','sharpen','motion','hdUpscale'].forEach(id=>$(id).addEventListener('change',updPreview));
+$('speed').addEventListener('change',updPreview);
+$('resetSl').addEventListener('click',()=>{B.value=100;C.value=100;S.value=100;
+  $('aiPolish').checked=true;$('sharpen').checked=false;
+  $('motion').checked=false;$('hdUpscale').checked=false;updPreview();});
+
+/* ---------- file handling ---------- */
+function setFile(f){
+  if(!f) return;
+  if(f.size>2*1024*1024*1024){ showToast('ফাইল অনেক বড়! সর্বোচ্চ ২GB'); return; }
+  file=f;
+  fName.textContent=f.name; fSize.textContent='📦 '+fmtMB(f.size); fDur.textContent='';
+  fileInfo.classList.add('on'); opts.classList.add('on'); goBtn.classList.add('on');
+  resCard.classList.remove('on'); progCard.classList.remove('on');
+  if(origURL) URL.revokeObjectURL(origURL);
+  origURL=URL.createObjectURL(f);
+  origPlayer.src=origURL; prevBox.src=origURL;
+  prevBox.onloadedmetadata=()=>{ vidDur=prevBox.duration||0;
+    if(vidDur&&isFinite(vidDur)){ fDur.textContent='⏱ '+fmtDur(vidDur);
+      $('trimEnd').placeholder='শেষ: '+vidDur.toFixed(0); prevBox.play().catch(()=>{}); } };
+  updPreview();
+}
+function clearFile(){
+  file=null; fileInput.value=''; fileInfo.classList.remove('on');
+  opts.classList.remove('on'); goBtn.classList.remove('on'); prevBox.removeAttribute('src');
+}
+
+drop.addEventListener('click',e=>{ if(e.target.id!=='demoBtn') fileInput.click(); });
+fileInput.addEventListener('change',e=>setFile(e.target.files[0]));
+['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over');}));
+drop.addEventListener('drop',e=>setFile(e.dataTransfer.files[0]));
+$('fRemove').addEventListener('click',e=>{e.stopPropagation();clearFile();});
+
+$('demoBtn').addEventListener('click',async e=>{
+  e.stopPropagation();
+  try{
+    showToast('ডেমো ভিডিও লোড হচ্ছে...');
+    const b=await fetch('/static/sample_noisy.mp4').then(r=>{if(!r.ok)throw 0;return r.blob();});
+    setFile(new File([b],'noisy_demo.mp4',{type:'video/mp4'}));
+  }catch{ showToast('ডেমো ভিডিও এখনো তৈরি হচ্ছে, ১০ সেকেন্ড পর আবার চেষ্টা করুন'); }
+});
+
+/* ---------- processing ---------- */
+function startTimer(){ t0=Date.now(); clearInterval(tickT);
+  tickT=setInterval(()=>{ elapsed.textContent='⏱ '+bnNum(Math.floor((Date.now()-t0)/1000))+'s'; },1000); }
+function setProgress(p,msg){ bar.style.width=p+'%'; if(msg) statusMsg.textContent=msg; }
+
+goBtn.addEventListener('click',()=>{
+  if(!file) return;
+  const ts=parseFloat($('trimStart').value)||0, te=parseFloat($('trimEnd').value)||0;
+  if(te>0&&te<=ts){ showToast('ট্রিমের শেষ সময় শুরুর চেয়ে বড় হতে হবে!'); return; }
+  goBtn.disabled=true; resCard.classList.remove('on'); progCard.classList.add('on');
+  bar.style.width='0%'; startTimer();
+
+  const fd=new FormData();
+  fd.append('file',file);
+  fd.append('strength',strength.value);
+  fd.append('bass_cut',$('bassCut').checked?'1':'0');
+  fd.append('polish',$('polish').checked?'1':'0');
+  fd.append('flip',getFlip());
+  fd.append('rotate',getRot());
+  fd.append('ai_polish',$('aiPolish').checked?'1':'0');
+  fd.append('motion',$('motion').checked?'1':'0');
+  fd.append('upscale',$('hdUpscale').checked?'1':'0');
+  fd.append('sharpen',$('sharpen').checked?'1':'0');
+  fd.append('brightness',B.value); fd.append('contrast',C.value); fd.append('saturation',S.value);
+  fd.append('speed',$('speed').value);
+  fd.append('trim_start',ts); fd.append('trim_end',te);
+
+  const xhr=new XMLHttpRequest();
+  xhr.open('POST','/upload');
+  xhr.upload.onprogress=e=>{
+    if(e.lengthComputable){
+      const pct=Math.round(e.loaded/e.total*100);
+      setProgress(Math.min(pct*0.03,3),'📤 আপলোড হচ্ছে... '+bnNum(pct)+'%');
+    }
+  };
+  xhr.onload=()=>{
+    let r={}; try{r=JSON.parse(xhr.responseText);}catch{}
+    if(xhr.status===200&&r.job_id){ jobId=r.job_id; poll(); }
+    else{ fail(r.error||'আপলোড ব্যর্থ হয়েছে!'); }
+  };
+  xhr.onerror=()=>fail('নেটওয়ার্ক সমস্যা! আবার চেষ্টা করুন।');
+  xhr.send(fd);
+});
+
+function poll(){
+  fetch('/status/'+jobId).then(r=>r.json()).then(j=>{
+    if(j.state==='error'){ fail(j.message||'প্রসেসিং ব্যর্থ!'); return; }
+    setProgress(j.progress||5,j.message);
+    if(j.state==='done'){ done(j); return; }
+    pollT=setTimeout(poll,1000);
+  }).catch(()=>{ pollT=setTimeout(poll,2000); });
+}
+
+function done(j){
+  clearInterval(tickT);
+  setProgress(100,'✅ সম্পন্ন!');
+  origPlayer.style.transform=''; origPlayer.style.filter=''; origPlayer.playbackRate=1;
+  cleanPlayer.src=j.file_url;
+  dlBtn.href=j.dl_url; dlBtn.download=j.clean_name||'processed.mp4';
+  setTimeout(()=>{ progCard.classList.remove('on'); resCard.classList.add('on');
+    resCard.scrollIntoView({behavior:'smooth'}); goBtn.disabled=false; },600);
+}
+function fail(msg){
+  clearInterval(tickT); progCard.classList.remove('on');
+  goBtn.disabled=false; showToast(msg);
+}
+$('againBtn').addEventListener('click',()=>{
+  resCard.classList.remove('on'); cleanPlayer.src=''; clearTimeout(pollT);
+  clearFile(); window.scrollTo({top:0,behavior:'smooth'});
+});
+
+updLabels();
+</script>
+</body>
+</html>

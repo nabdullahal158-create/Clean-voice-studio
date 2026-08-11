@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: cleanvoice-studio
+    runtime: docker
+    dockerfilePath: ./Dockerfile.render
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ENGINE
+        value: auto

@@ -1,0 +1,28 @@
+# CleanVoice Studio — Render/ফ্রি-টিয়ার স্লিম ইমেজ (~400MB RAMে চলে)
+# Stage 1: AI মডেল ONNX-এ এক্সপোর্ট (torch শুধু এখানে, ফাইনাল ইমেজে যায় না)
+FROM python:3.11-slim AS onnx-export
+ENV PIP_NO_CACHE_DIR=1
+RUN pip install torch --index-url https://download.pytorch.org/whl/cpu \
+ && pip install denoiser onnx onnxscript
+COPY export_onnx.py /tmp/export_onnx.py
+RUN mkdir -p /out && python /tmp/export_onnx.py
+
+# Stage 2: হালকা রানটাইম (onnxruntime only)
+FROM python:3.11-slim
+ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
+WORKDIR /app
+
+COPY requirements-slim.txt .
+RUN pip install -r requirements-slim.txt
+
+# এক্সপোর্ট হওয়া ONNX মডেল + RNNoise ফলব্যাক মডেল
+COPY --from=onnx-export /out/dns48_5s.onnx models/dns48_5s.onnx
+COPY models/bd.rnnn models/bd.rnnn
+
+COPY . .
+RUN mkdir -p uploads outputs static
+
+EXPOSE 10000
+# Render PORT env দেয়; ENGINE auto → onnx বেছে নেবে (torch নেই বলে)
+ENV ENGINE=auto
+CMD gunicorn app:app --bind 0.0.0.0:${PORT:-10000} --workers 1 --threads 4 --timeout 900
